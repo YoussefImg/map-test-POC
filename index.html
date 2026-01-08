@@ -1,66 +1,112 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="utf-8" />
   <title>Map draw + search</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+  <!-- Leaflet -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <!-- Leaflet Draw -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"
+  />
+
+  <!-- Leaflet Geocoder -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"
+  />
 
   <style>
-    html, body, #map {
+    html, body {
       height: 100%;
       margin: 0;
     }
+
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+
+    /* 🔍 Force l’affichage de la recherche */
+    .leaflet-control-geocoder {
+      display: block !important;
+      z-index: 1000;
+    }
   </style>
 </head>
+
 <body>
+  <div id="map"></div>
 
-<div id="map"></div>
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
-<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <!-- Leaflet Draw JS -->
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
-<script>
-  const map = L.map('map').setView([50.8503, 4.3517], 13);
+  <!-- Leaflet Geocoder JS -->
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
+  <script>
+    // 🗺️ Init map (Bruxelles)
+    const map = L.map('map').setView([50.8503, 4.3517], 12);
 
-  // 🔍 Recherche d’adresse
-  L.Control.geocoder({
-    defaultMarkGeocode: true,
-    placeholder: "Rechercher une adresse...",
-    errorMessage: "Adresse introuvable"
-  }).addTo(map);
+    // Fond de carte
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-  // ✏️ Dessin
-  const drawnItems = new L.FeatureGroup();
-  map.addLayer(drawnItems);
+    // 🔍 Recherche d’adresse
+    const geocoder = L.Control.geocoder({
+      position: 'topleft',
+      placeholder: 'Rechercher une adresse...',
+      errorMessage: 'Adresse introuvable',
+      defaultMarkGeocode: true
+    })
+    .on('markgeocode', function(e) {
+      const center = e.geocode.center;
+      map.setView(center, 17);
+    })
+    .addTo(map);
 
-  const drawControl = new L.Control.Draw({
-    draw: {
-      polygon: true,
-      polyline: false,
-      rectangle: false,
-      circle: false,
-      marker: false,
-      circlemarker: false
-    }
-  });
-  map.addControl(drawControl);
+    // ✏️ Zone de dessin
+    const drawnItems = new L.FeatureGroup();
+    map.addLayer(drawnItems);
 
-  map.on(L.Draw.Event.CREATED, function (e) {
-    drawnItems.clearLayers();
-    drawnItems.addLayer(e.layer);
+    const drawControl = new L.Control.Draw({
+      position: 'topleft',
+      draw: {
+        polygon: true,
+        polyline: false,
+        rectangle: false,
+        circle: false,
+        marker: false,
+        circlemarker: false
+      },
+      edit: {
+        featureGroup: drawnItems
+      }
+    });
+    map.addControl(drawControl);
 
-    const geojson = e.layer.toGeoJSON();
-    window.parent.postMessage(geojson, "*");
-  });
-</script>
+    // 📦 Capture du polygone (GeoJSON)
+    map.on(L.Draw.Event.CREATED, function (e) {
+      drawnItems.clearLayers();
+      drawnItems.addLayer(e.layer);
 
+      const geojson = e.layer.toGeoJSON();
+
+      // Envoi vers le parent (Power Apps / Teams / autre)
+      window.parent.postMessage(geojson, "*");
+
+      console.log("Zone dessinée (GeoJSON):", geojson);
+    });
+  </script>
 </body>
 </html>
