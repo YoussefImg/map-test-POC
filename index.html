@@ -2,9 +2,12 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Map draw</title>
+  <title>Map draw + search</title>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
+
   <style>
     html, body, #map {
       height: 100%;
@@ -13,10 +16,12 @@
   </style>
 </head>
 <body>
+
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 <script>
   const map = L.map('map').setView([50.8503, 4.3517], 13);
@@ -25,6 +30,14 @@
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
+  // 🔍 Recherche d’adresse
+  L.Control.geocoder({
+    defaultMarkGeocode: true,
+    placeholder: "Rechercher une adresse...",
+    errorMessage: "Adresse introuvable"
+  }).addTo(map);
+
+  // ✏️ Dessin
   const drawnItems = new L.FeatureGroup();
   map.addLayer(drawnItems);
 
@@ -48,5 +61,6 @@
     window.parent.postMessage(geojson, "*");
   });
 </script>
+
 </body>
 </html>
